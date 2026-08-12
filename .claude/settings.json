@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/format-on-stop.sh",
+            "timeout": 60,
+            "statusMessage": "Formateando código modificado (prettier + eslint --fix)..."
+          }
+        ]
+      }
+    ]
+  }
+}
