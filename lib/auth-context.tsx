@@ -1,31 +1,32 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { signOut } from "@/app/auth/actions";
 
 export interface AuthUser {
-  name: string;
+  id: string; // auth user id (claim `sub`)
+  name: string; // user_metadata.username en mayúsculas, listo para UI
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
-  login: (name: string) => void;
-  loginAsGuest: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-
+// The server is the source of truth: auth Server Actions revalidate the layout,
+// which re-renders this provider with a fresh `initialUser`.
+export function AuthProvider({
+  initialUser,
+  children,
+}: {
+  initialUser: AuthUser | null;
+  children: ReactNode;
+}) {
   const value = useMemo<AuthContextValue>(
-    () => ({
-      user,
-      login: (name: string) => setUser({ name: name.toUpperCase().slice(0, 10) }),
-      loginAsGuest: () => setUser(null),
-      logout: () => setUser(null),
-    }),
-    [user]
+    () => ({ user: initialUser, logout: () => signOut() }),
+    [initialUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

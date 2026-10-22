@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
-import { AuthProvider } from "@/lib/auth-context";
+import {
+  Press_Start_2P,
+  JetBrains_Mono,
+  Courier_Prime,
+} from "next/font/google";
+import { AuthProvider, type AuthUser } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase/server";
 import { Nav } from "@/components/nav";
 import "./globals.css";
 
@@ -28,11 +33,26 @@ export const metadata: Metadata = {
     "Arcade Vault — juega en línea y compite en el Salón de la Fama.",
 };
 
-export default function RootLayout({
+async function getInitialUser(): Promise<AuthUser | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims) return null;
+
+  const username =
+    (claims.user_metadata?.username as string | undefined) ??
+    claims.email?.split("@")[0] ??
+    "";
+  return { id: claims.sub, name: username.toUpperCase() };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialUser = await getInitialUser();
+
   return (
     <html
       lang="es"
@@ -42,7 +62,7 @@ export default function RootLayout({
         <div className="av-bg" />
         <div className="av-noise" />
         <div id="root">
-          <AuthProvider>
+          <AuthProvider initialUser={initialUser}>
             <Nav />
             <main className="av-main">{children}</main>
             <footer
